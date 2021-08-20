@@ -4,8 +4,20 @@ import random
 import redis
 import socket
 import sys
+import logging
 
 app = Flask(__name__)
+
+logger = logging.getLogger('voting_app')
+logger.setLevel(logging.DEBUG)
+
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+ch.setFormatter(formatter)
+logger.addHandler(ch)
+
+logger.debug('Starting voting app...')
 
 # Load configurations from environment or config file
 app.config.from_pyfile('config_file.cfg')
@@ -25,6 +37,10 @@ if ("TITLE" in os.environ and os.environ['TITLE']):
 else:
     title = app.config['TITLE']
 
+logger.debug('VOTE1VALUE = ' + button1)
+logger.debug('VOTE2VALUE = ' + button2)
+logger.debug('TITLE = ' + title)
+
 # Redis configurations
 redis_server = os.environ['REDIS']
 
@@ -38,6 +54,7 @@ try:
         r = redis.Redis(redis_server)
     r.ping()
 except redis.ConnectionError:
+    logger.error('Cannot connect to Redis server: ' + redis_server)
     exit('Failed to connect to Redis, terminating.')
 
 # Change title to host name to demo NLB
@@ -64,6 +81,8 @@ def index():
 
         if request.form['vote'] == 'reset':
             
+            logger.debug('Resetting the votes')
+
             # Empty table and return results
             r.set(button1,0)
             r.set(button2,0)
@@ -73,13 +92,18 @@ def index():
         
         else:
 
+            logger.debug('Saving votes')
+
             # Insert vote result into DB
             vote = request.form['vote']
             r.incr(vote,1)
             
             # Get current values
             vote1 = r.get(button1).decode('utf-8')
-            vote2 = r.get(button2).decode('utf-8')  
+            vote2 = r.get(button2).decode('utf-8')
+
+            logger.debug('vote1 = ' + vote1)
+            logger.debug('vote2 = ' + vote2)
                 
             # Return results
             return render_template("index.html", value1=int(vote1), value2=int(vote2), button1=button1, button2=button2, title=title)

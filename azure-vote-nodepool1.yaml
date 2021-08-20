@@ -13,7 +13,7 @@ spec:
         app: azure-vote-back
     spec:
       nodeSelector:
-        "beta.kubernetes.io/os": linux
+        "agentpool": nodepool1
       containers:
       - name: azure-vote-back
         image: mcr.microsoft.com/oss/bitnami/redis:6.0.8
@@ -54,7 +54,7 @@ spec:
         app: azure-vote-front
     spec:
       nodeSelector:
-        "beta.kubernetes.io/os": linux
+        "agentpool": nodepool1
       containers:
       - name: azure-vote-front
         image: ghcr.io/clarenceb/azure-vote-front:v1
